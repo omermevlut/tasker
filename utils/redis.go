@@ -21,9 +21,9 @@ type RedisUtil struct {
 }
 
 // NewRedisUtil ...
-func NewRedisUtil(addres string) RedisUtilInterface {
+func NewRedisUtil(address string) RedisUtilInterface {
 	return &RedisUtil{
-		Client: redis.NewClient(&redis.Options{Addr: addres, Password: "", DB: 0}),
+		Client: redis.NewClient(&redis.Options{Addr: address, Password: "", DB: 0}),
 	}
 }
 
