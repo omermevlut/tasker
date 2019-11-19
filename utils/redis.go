@@ -41,9 +41,6 @@ func (r *RedisUtil) MoveExpiredItems(expiry int64) {
 		[]string{config.Queues.Delayed, config.Queues.Default},
 		expiry,
 	)
-
-	// log.Println("Got values from delayed...")
-	// log.Println(res)
 }
 
 // PopFromActiveQueue ...
