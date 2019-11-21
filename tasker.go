@@ -8,6 +8,8 @@ import (
 	"github.com/omermevlut/tasker/utils"
 )
 
+var responseChan = make(chan Task, 1000)
+
 // Tasker ...
 type Tasker struct {
 	RedisUtil utils.RedisUtilInterface
@@ -26,7 +28,6 @@ func New(redisAddr string, workers int) *Tasker {
 		t.wg.Add(2)
 
 		go t.delayedQueueWorker()
-		go t.defaultQueueWorker()
 	}
 
 	return t
@@ -45,34 +46,37 @@ func (t *Tasker) SetOnRunChan(task chan *Task) {
 	t.OnRunChan = task
 }
 
+// OnRun ...
+func (t *Tasker) OnRun(callback func(t Task)) {
+	go func() {
+		for {
+			time.Sleep(time.Second)
+
+			var task Task
+			res := t.RedisUtil.PopFromActiveQueue()
+
+			if res == "" {
+				continue
+			}
+
+			json.Unmarshal([]byte(res), &task)
+			callback(task)
+
+			if task.isExpired() {
+				continue
+			}
+
+			if task.IsRepeating {
+				task.setNextRun()
+				t.Delayed(&task)
+			}
+		}
+	}()
+}
+
 func (t *Tasker) delayedQueueWorker() {
 	for {
 		t.RedisUtil.MoveExpiredItems(time.Now().Unix())
 		time.Sleep(time.Second)
-	}
-}
-
-func (t *Tasker) defaultQueueWorker() {
-	for {
-		time.Sleep(time.Second)
-
-		var task Task
-		res := t.RedisUtil.PopFromActiveQueue()
-
-		if res == "" {
-			continue
-		}
-
-		json.Unmarshal([]byte(res), &task)
-		t.OnRunChan <- &task
-
-		if task.isExpired() {
-			continue
-		}
-
-		if task.IsRepeating {
-			task.setNextRun()
-			t.Delayed(&task)
-		}
 	}
 }
