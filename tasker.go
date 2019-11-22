@@ -8,8 +8,6 @@ import (
 	"github.com/omermevlut/tasker/utils"
 )
 
-var responseChan = make(chan Task, 1000)
-
 // Tasker ...
 type Tasker struct {
 	RedisUtil utils.RedisUtilInterface
@@ -25,7 +23,7 @@ func New(redisAddr string, workers int) *Tasker {
 	}
 
 	for i := 0; i < workers; i++ {
-		t.wg.Add(2)
+		t.wg.Add(1)
 
 		go t.delayedQueueWorker()
 	}
