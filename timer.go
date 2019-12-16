@@ -15,6 +15,8 @@ type timer struct {
 	RunAt          int64        `json:"run_at"`
 	IsInfinite     bool         `json:"is_infinite"`
 	UntilTime      time.Time    `json:"until_time"`
+	RunCount       int64        `json:"run_count"`
+	MaxRunCount    int64        `json:"max_run_count"`
 }
 
 func (t *timer) createNextDailyRunDate() {

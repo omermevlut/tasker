@@ -93,6 +93,14 @@ func (t *Task) Until(until time.Time) *Task {
 	return t
 }
 
+// UntilCount repeats until count `r` is reached
+func (t *Task) UntilCount(r int64) *Task {
+	t.MaxRunCount = r
+	t.IsInfinite = false
+
+	return t
+}
+
 func (t *Task) isExpired() bool {
 	return (t.UntilTime.Unix() < time.Now().Unix()) && !t.IsInfinite
 }

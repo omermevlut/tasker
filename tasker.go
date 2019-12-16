@@ -11,7 +11,6 @@ import (
 // Tasker ...
 type Tasker struct {
 	RedisUtil utils.RedisUtilInterface
-	OnRunChan chan *Task
 	wg        *sync.WaitGroup
 }
 
@@ -39,11 +38,6 @@ func (t *Tasker) Delayed(task *Task) *Tasker {
 	return t
 }
 
-// SetOnRunChan accepts a task channel to be notified
-func (t *Tasker) SetOnRunChan(task chan *Task) {
-	t.OnRunChan = task
-}
-
 // OnRun ...
 func (t *Tasker) OnRun(callback func(t Task)) {
 	go func() {
@@ -60,9 +54,11 @@ func (t *Tasker) OnRun(callback func(t Task)) {
 			json.Unmarshal([]byte(res), &task)
 			callback(task)
 
-			if task.isExpired() {
+			if task.isExpired() || task.RunCount == task.MaxRunCount {
 				continue
 			}
+
+			task.RunCount++
 
 			if task.IsRepeating {
 				task.setNextRun()
