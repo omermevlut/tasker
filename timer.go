@@ -7,17 +7,17 @@ var week = 7 * day
 
 // manages schedule times of the tasks
 type timer struct {
-	IsRepeating    bool         `json:"is_recurring"`
-	Hour           int64        `json:"hour"`
-	Minute         int64        `json:"minute"`
-	WeekDay        time.Weekday `json:"week_day"`
-	MonthDay       int64        `json:"month_day"`
-	OccurrenceType string       `json:"occurrence_type"`
-	RunAt          int64        `json:"run_at"`
-	IsInfinite     bool         `json:"is_infinite"`
-	UntilTime      time.Time    `json:"until_time"`
-	RunCount       int64        `json:"run_count"`
-	MaxRunCount    int64        `json:"max_run_count"`
+	IsRepeating    bool           `json:"is_recurring"`
+	Hour           int64          `json:"hour"`
+	Minute         int64          `json:"minute"`
+	Weekdays       []time.Weekday `json:"week_days"`
+	MonthDay       int64          `json:"month_day"`
+	OccurrenceType string         `json:"occurrence_type"`
+	RunAt          int64          `json:"run_at"`
+	IsInfinite     bool           `json:"is_infinite"`
+	UntilTime      time.Time      `json:"until_time"`
+	RunCount       int64          `json:"run_count"`
+	MaxRunCount    int64          `json:"max_run_count"`
 }
 
 func (t *timer) createNextDailyRunDate() {
@@ -44,15 +44,21 @@ func (t *timer) createNextHourlyRunDate() {
 	t.RunAt = tm.Unix()
 }
 
-func (t *timer) createNextWeeklyRunDate() {
+func (t *timer) createNextWeeklyRunDay() {
+	var weekdays = make(map[time.Weekday]bool)
+
+	for _, weekday := range t.Weekdays {
+		weekdays[weekday] = true
+	}
+
 	now := time.Now()
 
 	for {
-		if int(now.Weekday()) == int(t.WeekDay) {
+		if weekdays[now.Weekday()] {
 			break
 		}
 
-		now = now.Add(day)
+		now.Add(day)
 	}
 
 	tm := time.Date(now.Year(), now.Month(), now.Day(), int(t.Hour), int(t.Minute), 0, 0, time.Local)
@@ -61,7 +67,7 @@ func (t *timer) createNextWeeklyRunDate() {
 		tm = tm.Add(week)
 	}
 
-	t.OccurrenceType = "weekly"
+	t.OccurrenceType = "week_days"
 	t.RunAt = tm.Unix()
 }
 
@@ -79,8 +85,8 @@ func (t *timer) createNextMonthlyRunDate() {
 
 func (t *timer) setNextRun() {
 	switch t.OccurrenceType {
-	case "weekly":
-		t.createNextWeeklyRunDate()
+	case "week_days":
+		t.createNextWeeklyRunDay()
 	case "daily":
 		t.createNextDailyRunDate()
 	case "hourly":

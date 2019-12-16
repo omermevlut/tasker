@@ -69,18 +69,18 @@ func (t *Task) HourlyAt(minute int64) *Task {
 	return t
 }
 
-// WeeklyAt runs the task periodically every week
-func (t *Task) WeeklyAt(weekday time.Weekday, hour, minute int64) *Task {
+// WeeklyAtDays runs everyweek on specified days
+func (t *Task) WeeklyAtDays(days []time.Weekday, hour, minute int64) *Task {
 	t.validateHour(hour)
 	t.validateMinute(minute)
 
-	t.Minute = minute
+	t.Weekdays = days
 	t.Hour = hour
-	t.WeekDay = weekday
+	t.Minute = minute
 	t.IsRepeating = true
 	t.IsInfinite = true
 
-	t.createNextWeeklyRunDate()
+	t.createNextWeeklyRunDay()
 
 	return t
 }
