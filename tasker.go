@@ -54,13 +54,13 @@ func (t *Tasker) OnRun(callback func(t Task)) {
 			json.Unmarshal([]byte(res), &task)
 			callback(task)
 
-			if task.isExpired() || task.RunCount == task.MaxRunCount {
+			if task.isExpired() || task.isReachedMaxRunCount() {
 				continue
 			}
 
-			task.RunCount++
-
 			if task.IsRepeating {
+				task.RunCount++
+
 				task.setNextRun()
 				t.Delayed(&task)
 			}

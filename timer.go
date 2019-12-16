@@ -14,6 +14,7 @@ type timer struct {
 	MonthDay       int64          `json:"month_day"`
 	OccurrenceType string         `json:"occurrence_type"`
 	RunAt          int64          `json:"run_at"`
+	StartAt        time.Time      `json:"start_at"`
 	IsInfinite     bool           `json:"is_infinite"`
 	UntilTime      time.Time      `json:"until_time"`
 	RunCount       int64          `json:"run_count"`
@@ -24,7 +25,11 @@ func (t *timer) createNextDailyRunDate() {
 	now := time.Now()
 	tm := time.Date(now.Year(), now.Month(), now.Day(), int(t.Hour), int(t.Minute), 0, 0, time.Local)
 
-	if tm.Unix() <= now.Unix() {
+	if ok, diff := t.shouldExecuteLater(); ok {
+		tm.Add(diff)
+	}
+
+	if t.isPastDate(tm) {
 		tm = tm.Add(day)
 	}
 
@@ -36,7 +41,11 @@ func (t *timer) createNextHourlyRunDate() {
 	now := time.Now()
 	tm := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), int(t.Minute), 0, 0, time.Local)
 
-	if tm.Unix() <= now.Unix() {
+	if ok, diff := t.shouldExecuteLater(); ok {
+		tm.Add(diff)
+	}
+
+	if t.isPastDate(tm) {
 		tm = tm.Add(time.Hour)
 	}
 
@@ -63,7 +72,11 @@ func (t *timer) createNextWeeklyRunDay() {
 
 	tm := time.Date(now.Year(), now.Month(), now.Day(), int(t.Hour), int(t.Minute), 0, 0, time.Local)
 
-	if tm.Unix() <= time.Now().Unix() {
+	if ok, diff := t.shouldExecuteLater(); ok {
+		tm.Add(diff)
+	}
+
+	if t.isPastDate(tm) {
 		tm = tm.Add(week)
 	}
 
@@ -75,7 +88,11 @@ func (t *timer) createNextMonthlyRunDate() {
 	now := time.Now()
 	tm := time.Date(now.Year(), now.Month(), int(t.MonthDay), int(t.Hour), int(t.Minute), 0, 0, time.Local)
 
-	if tm.Unix() <= time.Now().Unix() {
+	if ok, diff := t.shouldExecuteLater(); ok {
+		tm.Add(diff)
+	}
+
+	if t.isPastDate(tm) {
 		tm = tm.AddDate(0, 1, 0)
 	}
 
@@ -94,4 +111,12 @@ func (t *timer) setNextRun() {
 	case "monthly":
 		t.createNextMonthlyRunDate()
 	}
+}
+
+func (t *timer) shouldExecuteLater() (bool, time.Duration) {
+	return t.StartAt.Unix() > time.Now().Unix(), t.StartAt.Sub(time.Now())
+}
+
+func (t *timer) isPastDate(tm time.Time) bool {
+	return tm.Unix() < time.Now().Unix()
 }

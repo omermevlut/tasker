@@ -101,6 +101,13 @@ func (t *Task) MonthlyAt(hour, minute, day int64) *Task {
 	return t
 }
 
+// StartsAt given `date` time
+func (t *Task) StartsAt(datetime time.Time) *Task {
+	t.StartAt = datetime
+
+	return t
+}
+
 // Until repeats the task until the given time
 func (t *Task) Until(until time.Time) *Task {
 	t.UntilTime = until
@@ -119,4 +126,8 @@ func (t *Task) UntilCount(r int64) *Task {
 
 func (t *Task) isExpired() bool {
 	return (t.UntilTime.Unix() < time.Now().Unix()) && !t.IsInfinite
+}
+
+func (t *Task) isReachedMaxRunCount() bool {
+	return t.MaxRunCount != 0 && t.RunCount == t.MaxRunCount
 }
