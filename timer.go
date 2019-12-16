@@ -11,6 +11,7 @@ type timer struct {
 	Hour           int64        `json:"hour"`
 	Minute         int64        `json:"minute"`
 	WeekDay        time.Weekday `json:"week_day"`
+	MonthDay       int64        `json:"month_day"`
 	OccurrenceType string       `json:"occurrence_type"`
 	RunAt          int64        `json:"run_at"`
 	IsInfinite     bool         `json:"is_infinite"`
@@ -64,6 +65,18 @@ func (t *timer) createNextWeeklyRunDate() {
 	t.RunAt = tm.Unix()
 }
 
+func (t *timer) createNextMonthlyRunDate() {
+	now := time.Now()
+	tm := time.Date(now.Year(), now.Month(), int(t.MonthDay), int(t.Hour), int(t.Minute), 0, 0, time.Local)
+
+	if tm.Unix() <= time.Now().Unix() {
+		tm = tm.AddDate(0, 1, 0)
+	}
+
+	t.OccurrenceType = "monthly"
+	t.RunAt = tm.Unix()
+}
+
 func (t *timer) setNextRun() {
 	switch t.OccurrenceType {
 	case "weekly":
@@ -72,5 +85,7 @@ func (t *timer) setNextRun() {
 		t.createNextDailyRunDate()
 	case "hourly":
 		t.createNextHourlyRunDate()
+	case "monthly":
+		t.createNextMonthlyRunDate()
 	}
 }

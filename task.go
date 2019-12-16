@@ -85,6 +85,22 @@ func (t *Task) WeeklyAt(weekday time.Weekday, hour, minute int64) *Task {
 	return t
 }
 
+// MonthlyAt run at specified day of a given month
+func (t *Task) MonthlyAt(hour, minute, day int64) *Task {
+	t.validateHour(hour)
+	t.validateMinute(minute)
+
+	t.Minute = minute
+	t.Hour = hour
+	t.MonthDay = day
+	t.IsInfinite = true
+	t.IsRepeating = true
+
+	t.createNextMonthlyRunDate()
+
+	return t
+}
+
 // Until repeats the task until the given time
 func (t *Task) Until(until time.Time) *Task {
 	t.UntilTime = until
