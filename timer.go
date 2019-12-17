@@ -25,12 +25,12 @@ func (t *timer) createNextDailyRunDate() {
 	now := time.Now()
 	tm := time.Date(now.Year(), now.Month(), now.Day(), int(t.Hour), int(t.Minute), 0, 0, time.Local)
 
-	if ok, diff := t.shouldExecuteLater(); ok {
-		tm.Add(diff)
-	}
+	for {
+		if tm.Unix() > now.Unix() && tm.Unix() > t.StartAt.Unix() {
+			break
+		}
 
-	if t.isPastDate(tm) {
-		tm = tm.Add(day)
+		tm = tm.AddDate(0, 0, 1)
 	}
 
 	t.OccurrenceType = "daily"
@@ -41,11 +41,11 @@ func (t *timer) createNextHourlyRunDate() {
 	now := time.Now()
 	tm := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), int(t.Minute), 0, 0, time.Local)
 
-	if ok, diff := t.shouldExecuteLater(); ok {
-		tm.Add(diff)
-	}
+	for {
+		if tm.Unix() > now.Unix() && tm.Unix() > t.StartAt.Unix() {
+			break
+		}
 
-	if t.isPastDate(tm) {
 		tm = tm.Add(time.Hour)
 	}
 
@@ -61,23 +61,14 @@ func (t *timer) createNextWeeklyRunDay() {
 	}
 
 	now := time.Now()
+	tm := time.Date(now.Year(), now.Month(), now.Day(), int(t.Hour), int(t.Minute), 0, 0, time.Local)
 
 	for {
-		if weekdays[now.Weekday()] {
+		if weekdays[tm.Weekday()] && tm.Unix() > t.StartAt.Unix() && tm.Unix() > now.Unix() {
 			break
 		}
 
-		now.Add(day)
-	}
-
-	tm := time.Date(now.Year(), now.Month(), now.Day(), int(t.Hour), int(t.Minute), 0, 0, time.Local)
-
-	if ok, diff := t.shouldExecuteLater(); ok {
-		tm.Add(diff)
-	}
-
-	if t.isPastDate(tm) {
-		tm = tm.Add(week)
+		tm = tm.AddDate(0, 0, 1)
 	}
 
 	t.OccurrenceType = "week_days"
@@ -86,14 +77,21 @@ func (t *timer) createNextWeeklyRunDay() {
 
 func (t *timer) createNextMonthlyRunDate() {
 	now := time.Now()
-	tm := time.Date(now.Year(), now.Month(), int(t.MonthDay), int(t.Hour), int(t.Minute), 0, 0, time.Local)
+	tm := time.Date(now.Year(), now.Month(), now.Day(), int(t.Hour), int(t.Minute), 0, 0, time.Local)
 
-	if ok, diff := t.shouldExecuteLater(); ok {
-		tm.Add(diff)
-	}
+	// Ignore months that have less days than specified
+	for {
+		start := time.Date(tm.Year(), tm.Month(), 1, 0, 0, 0, 0, time.Local)
+		end := start.AddDate(0, 1, 0).Add(time.Nanosecond * -1)
 
-	if t.isPastDate(tm) {
-		tm = tm.AddDate(0, 1, 0)
+		if t.MonthDay <= int64(end.Day()) && tm.Unix() > t.StartAt.Unix() {
+			tm = tm.AddDate(0, 0, int(t.MonthDay)-tm.Day())
+
+			break
+		}
+
+		// Add month
+		tm = tm.AddDate(0, 1, int(t.MonthDay)-tm.Day())
 	}
 
 	t.OccurrenceType = "monthly"
