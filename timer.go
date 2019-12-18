@@ -1,6 +1,8 @@
 package tasker
 
-import "time"
+import (
+	"time"
+)
 
 var day = 24 * time.Hour
 var week = 7 * day
@@ -75,23 +77,17 @@ func (t *timer) createNextWeeklyRunDay() {
 	t.RunAt = tm.Unix()
 }
 
-func (t *timer) createNextMonthlyRunDate() {
+func (t *timer) createNextMonthlyRunDay() {
 	now := time.Now()
 	tm := time.Date(now.Year(), now.Month(), now.Day(), int(t.Hour), int(t.Minute), 0, 0, time.Local)
 
-	// Ignore months that have less days than specified
 	for {
-		start := time.Date(tm.Year(), tm.Month(), 1, 0, 0, 0, 0, time.Local)
-		end := start.AddDate(0, 1, 0).Add(time.Nanosecond * -1)
-
-		if t.MonthDay <= int64(end.Day()) && tm.Unix() > t.StartAt.Unix() {
-			tm = tm.AddDate(0, 0, int(t.MonthDay)-tm.Day())
-
+		if int(t.MonthDay) == tm.Day() && tm.Unix() > t.StartAt.Unix() && tm.Unix() > now.Unix() {
 			break
 		}
 
-		// Add month
-		tm = tm.AddDate(0, 1, int(t.MonthDay)-tm.Day())
+		// Increment daily
+		tm = tm.AddDate(0, 0, 1)
 	}
 
 	t.OccurrenceType = "monthly"
@@ -107,14 +103,10 @@ func (t *timer) setNextRun() {
 	case "hourly":
 		t.createNextHourlyRunDate()
 	case "monthly":
-		t.createNextMonthlyRunDate()
+		t.createNextMonthlyRunDay()
 	}
 }
 
-func (t *timer) shouldExecuteLater() (bool, time.Duration) {
-	return t.StartAt.Unix() > time.Now().Unix(), t.StartAt.Sub(time.Now())
-}
-
-func (t *timer) isPastDate(tm time.Time) bool {
-	return tm.Unix() < time.Now().Unix()
+func (t *timer) isNextRunExpired() bool {
+	return t.UntilTime.Year() != 1 && t.UntilTime.Unix() < t.RunAt
 }

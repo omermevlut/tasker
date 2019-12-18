@@ -96,7 +96,7 @@ func (t *Task) MonthlyAt(hour, minute, day int64) *Task {
 	t.IsInfinite = true
 	t.IsRepeating = true
 
-	t.createNextMonthlyRunDate()
+	t.createNextMonthlyRunDay()
 
 	return t
 }
@@ -125,9 +125,9 @@ func (t *Task) UntilCount(r int64) *Task {
 }
 
 func (t *Task) isExpired() bool {
-	return (t.UntilTime.Unix() < time.Now().Unix()) && !t.IsInfinite
-}
+	if t.MaxRunCount != 0 && t.UntilTime.Year() == 1 {
+		return t.RunCount == t.MaxRunCount
+	}
 
-func (t *Task) isReachedMaxRunCount() bool {
-	return t.MaxRunCount != 0 && t.RunCount == t.MaxRunCount
+	return (t.UntilTime.Unix() <= time.Now().Unix()) && !t.IsInfinite
 }
