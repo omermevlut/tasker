@@ -28,7 +28,7 @@ func (t *timer) createNextDailyRunDate() {
 	tm := time.Date(now.Year(), now.Month(), now.Day(), int(t.Hour), int(t.Minute), 0, 0, time.Local)
 
 	for {
-		if tm.Unix() > now.Unix() && tm.Unix() > t.StartAt.Unix() {
+		if tm.Unix() > now.Unix() && tm.Unix() >= t.StartAt.Unix() {
 			break
 		}
 
@@ -44,7 +44,7 @@ func (t *timer) createNextHourlyRunDate() {
 	tm := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), int(t.Minute), 0, 0, time.Local)
 
 	for {
-		if tm.Unix() > now.Unix() && tm.Unix() > t.StartAt.Unix() {
+		if tm.Unix() > now.Unix() && tm.Unix() >= t.StartAt.Unix() {
 			break
 		}
 
@@ -66,7 +66,7 @@ func (t *timer) createNextWeeklyRunDay() {
 	tm := time.Date(now.Year(), now.Month(), now.Day(), int(t.Hour), int(t.Minute), 0, 0, time.Local)
 
 	for {
-		if weekdays[tm.Weekday()] && tm.Unix() > t.StartAt.Unix() && tm.Unix() > now.Unix() {
+		if weekdays[tm.Weekday()] && tm.Unix() >= t.StartAt.Unix() && tm.Unix() > now.Unix() {
 			break
 		}
 
@@ -82,7 +82,7 @@ func (t *timer) createNextMonthlyRunDay() {
 	tm := time.Date(now.Year(), now.Month(), now.Day(), int(t.Hour), int(t.Minute), 0, 0, time.Local)
 
 	for {
-		if int(t.MonthDay) == tm.Day() && tm.Unix() > t.StartAt.Unix() && tm.Unix() > now.Unix() {
+		if int(t.MonthDay) == tm.Day() && tm.Unix() >= t.StartAt.Unix() && tm.Unix() > now.Unix() {
 			break
 		}
 
@@ -108,5 +108,9 @@ func (t *timer) setNextRun() {
 }
 
 func (t *timer) isNextRunExpired() bool {
+	if t.MaxRunCount != 0 && t.UntilTime.Year() == 1 {
+		return t.RunCount > t.MaxRunCount
+	}
+
 	return t.UntilTime.Year() != 1 && t.UntilTime.Unix() < t.RunAt
 }
