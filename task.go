@@ -120,6 +120,7 @@ func (t *Task) Until(until time.Time) *Task {
 func (t *Task) UntilCount(r int64) *Task {
 	t.MaxRunCount = r
 	t.IsInfinite = false
+	t.RunCount = 1
 
 	return t
 }
