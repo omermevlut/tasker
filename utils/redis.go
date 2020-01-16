@@ -17,19 +17,21 @@ type RedisUtilInterface interface {
 
 // RedisUtil ...
 type RedisUtil struct {
-	Client *redis.Client
+	Client      *redis.Client
+	queueSuffix string
 }
 
 // NewRedisUtil ...
-func NewRedisUtil(address string) RedisUtilInterface {
+func NewRedisUtil(address, queueSuffix string) RedisUtilInterface {
 	return &RedisUtil{
-		Client: redis.NewClient(&redis.Options{Addr: address, Password: "", DB: 0}),
+		Client:      redis.NewClient(&redis.Options{Addr: address, Password: "", DB: 0}),
+		queueSuffix: queueSuffix,
 	}
 }
 
 // SetDelayed task
 func (r *RedisUtil) SetDelayed(value interface{}, expiry float64) {
-	r.Client.ZAdd(config.Queues.Delayed, redis.Z{Member: value, Score: expiry})
+	r.Client.ZAdd(config.Queues.Delayed+r.queueSuffix, redis.Z{Member: value, Score: expiry})
 }
 
 // MoveExpiredItems ...
@@ -38,7 +40,7 @@ func (r *RedisUtil) MoveExpiredItems(expiry int64) {
 
 	r.Client.Eval(
 		string(file),
-		[]string{config.Queues.Delayed, config.Queues.Default},
+		[]string{config.Queues.Delayed + r.queueSuffix, config.Queues.Default + r.queueSuffix},
 		expiry,
 	)
 }
@@ -49,7 +51,11 @@ func (r *RedisUtil) PopFromActiveQueue() string {
 
 	res := r.Client.Eval(
 		string(file),
-		[]string{config.Queues.Default, config.Queues.Expired, time.Now().Format(time.RFC3339)},
+		[]string{
+			config.Queues.Default + r.queueSuffix,
+			config.Queues.Expired + r.queueSuffix,
+			time.Now().Format(time.RFC3339),
+		},
 		time.Now().Unix(),
 	)
 

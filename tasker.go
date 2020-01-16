@@ -15,9 +15,9 @@ type Tasker struct {
 }
 
 // New tasker
-func New(redisAddr string, workers int) *Tasker {
+func New(redisAddr string, workers int, appName string) *Tasker {
 	t := &Tasker{
-		RedisUtil: utils.NewRedisUtil(redisAddr),
+		RedisUtil: utils.NewRedisUtil(redisAddr, appName),
 		wg:        &sync.WaitGroup{},
 	}
 
