@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"io/ioutil"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -11,8 +10,8 @@ import (
 // RedisUtilInterface ...
 type RedisUtilInterface interface {
 	SetDelayed(value interface{}, expiry float64)
-	MoveExpiredItems(expiry int64)
-	PopFromActiveQueue() string
+	MoveExpiredItems(expiry int64, script string)
+	PopFromActiveQueue(script string) string
 }
 
 // RedisUtil ...
@@ -35,22 +34,18 @@ func (r *RedisUtil) SetDelayed(value interface{}, expiry float64) {
 }
 
 // MoveExpiredItems ...
-func (r *RedisUtil) MoveExpiredItems(expiry int64) {
-	file, _ := ioutil.ReadFile(config.LuaScripts.MoveExpired)
-
+func (r *RedisUtil) MoveExpiredItems(expiry int64, script string) {
 	r.Client.Eval(
-		string(file),
+		script,
 		[]string{config.Queues.Delayed + r.queueSuffix, config.Queues.Default + r.queueSuffix},
 		expiry,
 	)
 }
 
 // PopFromActiveQueue ...
-func (r *RedisUtil) PopFromActiveQueue() string {
-	file, _ := ioutil.ReadFile(config.LuaScripts.PopActive)
-
+func (r *RedisUtil) PopFromActiveQueue(script string) string {
 	res := r.Client.Eval(
-		string(file),
+		script,
 		[]string{
 			config.Queues.Default + r.queueSuffix,
 			config.Queues.Expired + r.queueSuffix,

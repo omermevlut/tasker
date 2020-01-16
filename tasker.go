@@ -2,6 +2,7 @@ package tasker
 
 import (
 	"encoding/json"
+	"github.com/omermevlut/tasker/config"
 	"sync"
 	"time"
 
@@ -45,7 +46,7 @@ func (t *Tasker) OnRun(callback func(t Task)) {
 			time.Sleep(time.Second)
 
 			var task Task
-			res := t.RedisUtil.PopFromActiveQueue()
+			res := t.RedisUtil.PopFromActiveQueue(loadScript(config.LuaScripts.PopActive))
 
 			if res == "" {
 				continue
@@ -72,7 +73,7 @@ func (t *Tasker) OnRun(callback func(t Task)) {
 
 func (t *Tasker) delayedQueueWorker() {
 	for {
-		t.RedisUtil.MoveExpiredItems(time.Now().Unix())
+		t.RedisUtil.MoveExpiredItems(time.Now().Unix(), loadScript(config.LuaScripts.MoveExpired))
 		time.Sleep(time.Second)
 	}
 }
